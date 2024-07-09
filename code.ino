@@ -1,8 +1,8 @@
 #include <LiquidCrystal_I2C.h>
 #include <Stepper.h>
-#define leftButton 3
-#define rightButton 4
-#define middleButton 5
+#define leftButton 2
+#define rightButton 3
+#define middleButton 4
 
 int xPos = 0;
 int yPos = 0;
@@ -12,14 +12,15 @@ int setupSetting = 0;
 int minutes = 0;
 int horiInt = 0;
 int rotInt = 0;
+int counter = 0;
 
 int start = 0;
 const int stepsPerRevolution = 2038;
-int fullLength = 15000;
-int fullRotation = 1250;
+int fullLength = 15630;
+int fullRotation = 700;
 
-Stepper stepper1 = Stepper(stepsPerRevolution, 6, 7, 8, 9);
-Stepper stepper2 = Stepper(stepsPerRevolution, 10, 11, 12, 13);
+Stepper stepper1 = Stepper(stepsPerRevolution, 5, 6, 7, 8);
+Stepper other = Stepper(stepsPerRevolution, 9, 10, 11, 12);
 
 LiquidCrystal_I2C lcd(0x3F,  16, 2);
 
@@ -29,6 +30,9 @@ void setup() {
   pinMode(middleButton, INPUT_PULLUP);
   lcd.init();
   lcd.backlight();
+  Serial.begin(9600);
+  other.setSpeed(5);
+  stepper1.setSpeed(5);
 }
 
 void loop() {
@@ -36,6 +40,7 @@ void loop() {
     {
       lcd.setCursor(0,0);
       lcd.print("Minutes taken:");
+      Serial.println("s");
       if(digitalRead(rightButton) == 0)
       {
         minutes++;
@@ -61,13 +66,23 @@ void loop() {
     {
       for(int i = 0; i < (minutes * 60 * 20); i++)
       {
-        stepper1.setSpeed(5);
-        stepper2.setSpeed(5);
-        stepper1.step(fullLength /(minutes* 60 * 20));
-        stepper2.step(0-(fullRotation /(minutes* 60 * 20)));
-        Serial.println("move");
+        counter++;
+        stepper1.step((fullLength)/(minutes * 60 * 20));
+        moveMotor();
         delay(50);
       }
+      start++;
+      stepper1.setSpeed(10);
+      other.setSpeed(10);
+      stepper1.step(0-fullLength);
+      other.step(fullRotation);
     }
   }
 
+void moveMotor()
+{
+  if(counter % 10 == 0)
+  {
+    other.step(0-(fullRotation)/(minutes * 60 *10));
+  }
+}
